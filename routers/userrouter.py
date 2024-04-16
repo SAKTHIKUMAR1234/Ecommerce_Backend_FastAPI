@@ -148,5 +148,3 @@ def cart_details():
     session.close()
     raise exceptions.CustomeException("OOP'S SOMETHNIG WENT WRONG")
   
-
-  
