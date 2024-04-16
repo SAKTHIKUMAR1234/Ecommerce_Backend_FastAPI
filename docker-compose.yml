@@ -1,0 +1,29 @@
+
+services:
+  web:
+    build: .
+    container_name: ske_com
+    network_mode : "custom"
+    ports:
+      - "8081:8000"
+    depends_on:
+      - db
+
+  db:
+    image: mysql:latest
+    restart: always
+    container_name: mysql_server
+    environment:
+      MYSQL_DATABASE: 'fastapiecommerce'
+      MYSQL_USER: 'user'
+      MYSQL_PASSWORD: 'password'
+      MYSQL_ROOT_PASSWORD: 'password'
+    ports:
+      - '3307:3306'
+    volumes:
+      - db:/var/lib/mysql
+    network_mode: 'custom'
+
+volumes:
+    db:
+      driver : local
