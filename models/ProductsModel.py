@@ -15,4 +15,5 @@ class ProductsModel(BaseModel):
   
   vendor = relationship('VendorModel',back_populates='products')
   category = relationship('CategoryModel',back_populates='products')
+  product_images = relationship('PictureModel',uselist=True,back_populates='product')
   

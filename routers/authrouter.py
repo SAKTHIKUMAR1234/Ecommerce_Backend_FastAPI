@@ -72,6 +72,7 @@ def user_login(login:Login):
       session.close()
       return response.response_sender(data=None,message='INVALID PASSWORD',http=HTTPStatus.FORBIDDEN)
   except Exception as e:
+    print(e)
     session.rollback()
     session.close()
     raise CustomeException("OOP'S SOMETHNIG WENT WRONG")

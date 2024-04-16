@@ -10,6 +10,8 @@ from services.securityconfig import set_current_user
 open_paths = [
   '/api/auth/login',
   '/api/auth/signup',
+  '/docs',
+  '/openapi.json'
 ]
 
 async def authmiddleware(req : Request ,  call_next):

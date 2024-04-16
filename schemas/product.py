@@ -1,10 +1,12 @@
-from pydantic import BaseModel, validator
+from pydantic import BaseModel
+from typing import Annotated, List
+from fastapi import UploadFile,File,Form
 
-class Products(BaseModel):
-   
-   product_name : str
-   product_price : float
 
-class ProductList(BaseModel):
+class ProductCreateSchema(BaseModel):
   
-  products_list : list[Products]
+  product_name : str
+  product_price : str
+  count : str
+  category_id : str
+  # images : UploadFile = Form(...)

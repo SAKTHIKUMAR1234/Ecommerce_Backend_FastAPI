@@ -16,4 +16,6 @@ from models.OrdersModel import OrdersModel, OrderItemModel
 
 from models.PaymentModel import PaymentModel
 
+from models.PicturesModel import PictureModel
+
 

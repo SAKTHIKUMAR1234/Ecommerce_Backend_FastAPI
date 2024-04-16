@@ -1,16 +1,19 @@
 from http import HTTPStatus
-from fastapi import APIRouter
+from fastapi import APIRouter, Form, UploadFile
 from services.database import SessionLocal
 from common.exceptions import CustomeException
 from common import response
 from services.securityconfig import get_current_user
 from services.database import SessionLocal
-from models import UsersModel,VendorModel, CategoryModel
+from models import UsersModel,VendorModel, CategoryModel, ProductsModel, PictureModel
 from models.VendorModel import VendorStatus
 from schemas.vendorrequest import VendorRequest
 from schemas.vendorrequestdecision import VendorRequestDecision
 from schemas.category import Category
 import traceback 
+from typing import List
+from services.firebaseconfig import get_storage_bucket
+from services.time_services import get_current_milli_seconds
 
 
 vendorrouter = APIRouter(prefix='/vendor')
@@ -124,6 +127,46 @@ def create_category(category : Category):
     session.close()
     raise CustomeException("OOP'S SOMETHNIG WENT WRONG")
   
-# @vendorrouter.post('/products/add')
-# def create_products():
-#   pass
+@vendorrouter.post('/products/add')
+def create_products(product_name : str = Form(...), product_price :str = Form(...), count : str = Form(...), category_id : str = Form(...), images : List[UploadFile] = Form(...)):
+  try:  
+    session = SessionLocal()
+    session.begin()
+    exist_product = session.query(ProductsModel).filter(ProductsModel.product_name == product_name).first()
+    if exist_product is not None:
+      session.close()
+      return response.response_sender(data={'product_name':product_name},message='PRODUCT NAME ALREADY EXIST',http=HTTPStatus.CONFLICT)
+    category = session.query(CategoryModel).filter(CategoryModel.id == category_id).first()
+    if category is None:
+      session.close()
+      return response.response_sender(data={'category_id':category_id},message="CATEGORY DOES NOT EXIST",http=HTTPStatus.NOT_FOUND)
+    product_model = ProductsModel()
+    product_model.product_name = product_name
+    product_model.product_count = count
+    product_model.product_price = product_price 
+    product_model.category = category
+    user = session.query(UsersModel).filter(UsersModel.email == get_current_user()['email']).first()
+    vendor = session.query(VendorModel).filter(VendorModel.user == user , VendorModel.status == 0).first()
+    if vendor is None:
+      session.close()
+      return response.response_sender(data=None,message="VENDOR IS NOT REGISTERED",http=HTTPStatus.FORBIDDEN)
+    product_model.vendor = vendor
+    session.add(product_model)
+    bucket = get_storage_bucket()
+    for image in images:
+      picture_model = PictureModel()
+      picture_model.picture_original_name = image.filename
+      blob = bucket.blob('images/'+get_current_milli_seconds()+image.filename)
+      blob.upload_from_file(image.file)
+      blob.make_public()
+      picture_model.picture_url = blob.public_url
+      picture_model.product = product_model
+      session.add(picture_model)
+    session.commit()
+    session.close()
+    return response.response_sender(data=None,message='PRODUCT ADDED SUCCESSFULLY',http=HTTPStatus.CREATED)
+  except Exception as e:
+    traceback.print_exception(e)
+    session.rollback()
+    session.close()
+    raise CustomeException("OOP'S SOMETHNIG WENT WRONG")
