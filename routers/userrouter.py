@@ -1,9 +1,11 @@
 from fastapi import APIRouter
 from common import response,exceptions
 from services.database import SessionLocal
+from services.payment_services import client,get_random_id
 from services.securityconfig import get_current_user
-from models import CartModel,UsersModel,ProductsModel,ProductCartModel
+from models import CartModel,UsersModel,ProductsModel,ProductCartModel,OrdersModel,OrderItemModel,VendorModel,VendorStatus
 from http import HTTPStatus
+import traceback
 
 user_router = APIRouter(prefix='/user')
 
@@ -18,11 +20,52 @@ def get_cart_product_price(cart_model:CartModel):
     product_details = {
       'product_name' : products.product.product_name,
       'product_count' : products.quantity,
-      'product_price' : products.product.product_price
+      'product_price' : products.product.product_price,
+      'products_images' : [
+        {
+          'image_url' : image.picture_url
+        }
+        for image in products.product.product_images
+      ]
     }
     cart_products_price['product_list'].append(product_details)
   return cart_products_price
 
+@user_router.get('')
+def user_details():
+  try:
+    session = SessionLocal()
+    session.begin()
+    user = session.query(UsersModel).filter(UsersModel.email == get_current_user()['email']).first()
+    vendor = session.query(VendorModel).filter(VendorModel.user == user,VendorModel.status == VendorStatus.accepted).first()
+    is_vendor = False
+    vendor_details = {}
+    if vendor is not None:
+      is_vendor = True
+      vendor_details = {
+        'vendor_address' : vendor.vendor_address,
+        'vendor_name' : vendor.vendor_name
+      }
+    response_body = {
+      'user_name' : user.first_name+" "+user.last_name,
+      'email_id' : user.email,
+      'phone_number' : user.phone_number,
+      'is_dev' : user.isdev,
+      'is_vendor' : is_vendor,
+      'vendor_details' : vendor_details
+    }
+    session.commit()
+    session.close()
+    return response.response_sender(
+      data=response_body,
+      message="DETAILS FETCHED",
+      http=HTTPStatus.OK
+    )
+    
+  except Exception as e:
+    session.rollback()
+    session.close()
+    raise exceptions.CustomeException("OOP'S SOMETHNIG WENT WRONG")
 
 @user_router.post('/add_to_cart')
 def add_to_cart(product_id : int):
@@ -143,7 +186,55 @@ def cart_details():
     session.close()
     return response.response_sender(data=response_body,message='CART DATA FETCHED SUCCESSFULLY',http=HTTPStatus.OK)
   except Exception as e:
-    print(e)
+    session.rollback()
+    session.close()
+    raise exceptions.CustomeException("OOP'S SOMETHNIG WENT WRONG")
+
+@user_router.post('/order')
+def make_order():
+  try:
+    session = SessionLocal()
+    session.begin()
+    user = session.query(UsersModel).filter(UsersModel.email == get_current_user()['email']).first()
+    cart : CartModel = user.user_cart
+    cart_products : list[ProductCartModel] = cart.cart_product_list
+    if len(cart_products) == 0:
+      session.close()
+      return response.response_sender(data=None,message='YOUR CART IS EMPTY',http=HTTPStatus.NOT_FOUND)
+    total_cost = 0
+    order_model = OrdersModel()
+    order_model.user = user
+    session.add(order_model)
+    for product in cart_products:
+      order_item_model = OrderItemModel()
+      order_item_model.order = order_model
+      order_item_model.quantity = product.quantity
+      order_item_model.product = product.product
+      session.add(order_item_model)
+      total_cost += product.product.product_price
+      session.delete(product)
+    data = {
+      'amount' : total_cost*100,
+      'currency' : 'INR',
+      'receipt' : get_random_id()
+    }
+    order = client.order.create(data = data)
+    order_model.razor_pay_order_id = order['id']
+    response_body = {
+      "order_id":order['id'],
+      "payment_details":data,
+      "user_details":{
+        "user_name" : user.first_name+" "+user.last_name,
+        "user_email" : user.email,
+        "phone_number" : user.phone_number
+      }
+    }
+    session.add(order_model)
+    # session.commit()
+    session.close()
+    return response.response_sender(data=response_body,message='ORDER_PLACED',http=HTTPStatus.OK)
+  except Exception as e:
+    traceback.print_exception(e)
     session.rollback()
     session.close()
     raise exceptions.CustomeException("OOP'S SOMETHNIG WENT WRONG")

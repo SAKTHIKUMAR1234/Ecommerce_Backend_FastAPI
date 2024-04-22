@@ -28,7 +28,7 @@ def get_all_categories():
     session.close()
     raise CustomeException("OOP'S SOMETHNIG WENT WRONG")
   
-@products_router.get('/')
+@products_router.get('')
 def get_all_products():
   try:
     session = SessionLocal()

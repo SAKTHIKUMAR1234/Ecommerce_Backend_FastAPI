@@ -5,6 +5,14 @@ from common.exceptions import CustomeException, InvalidDataException
 from middleware.Authmiddleware import authmiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from services.firebaseconfig import initialize_firbase
+from fastapi.middleware.cors import CORSMiddleware
+
+
+origins = [
+    "http://localhost",
+    "http://localhost:3000"
+]
+
 
 class CreateApp: 
   app = None
@@ -19,6 +27,13 @@ class CreateApp:
       self.app.include_router(productsrouter.products_router,prefix='/api')
       self.app.include_router(userrouter.user_router,prefix='/api')
       self.app.add_middleware(BaseHTTPMiddleware,dispatch = authmiddleware)
+      self.app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE"],
+        allow_headers=["*"],
+      )
       initialize_firbase()
       
       

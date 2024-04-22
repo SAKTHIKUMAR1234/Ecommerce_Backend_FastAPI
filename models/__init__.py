@@ -6,7 +6,7 @@ from models.UsersModel import UsersModel
 
 from models.ProductsModel import ProductsModel
 
-from models.VendorModel import VendorModel
+from models.VendorModel import VendorModel,VendorStatus
 
 from models.CategoryModel import CategoryModel
 

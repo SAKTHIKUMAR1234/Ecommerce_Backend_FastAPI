@@ -16,12 +16,13 @@ class PaymentModel(BaseModel):
   
     __tablename__ = 'payment_table'
 
-    order_id = Column(Integer, ForeignKey('orders_table.id'))  
+    order_id = Column(Integer, ForeignKey('orders_table.id'),default=None,nullable=True)  
     payment_amount = Column(Double) 
     payment_method = Column(String(50))
     payment_status = Column(Enum(PaymentSatus),default=PaymentSatus.pending)
     transaction_id = Column(String(100))
     payment_details = Column(Text)
+    payment_signature = Column(Text)
     
     order = relationship("OrdersModel", uselist=False, back_populates="payment")
     

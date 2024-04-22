@@ -6,12 +6,14 @@ class Signup(BaseModel):
     first_name: str
     last_name: str
     email: str
+    phone_number : str
     password: str
 
     @validator("first_name", "last_name")
     def validate_name(cls, v):
-        if not v.strip().isalpha():
-            raise InvalidDataException("Name must contain only alphabets and spaces")
+        pattern = r'^[A-Za-z]+(?: [A-Za-z]+)?$'
+        if not re.match(pattern, v):
+            raise InvalidDataException("Name must contain only alphabets and at most one space")
         return v.strip()
 
     @validator("email")
@@ -25,4 +27,11 @@ class Signup(BaseModel):
     def validate_password(cls, v):
         if len(v) < 8:
             raise InvalidDataException("Password must be at least 8 characters long")
+        return v
+    
+    @validator('phone_number')
+    def validate_phone_number(cls,v):
+        phone_number_regex = r'^[0-9]'
+        if not re.match(phone_number_regex,v) or len(v)!=10:
+            raise InvalidDataException("Enter Valid Phone Number")
         return v

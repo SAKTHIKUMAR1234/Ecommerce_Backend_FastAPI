@@ -18,6 +18,7 @@ class UsersModel(BaseModel):
   last_name = Column(String(50),nullable=False)
   email = Column(String(100),nullable=False)
   password = Column(Text,nullable=False)
+  phone_number = Column(String(10),nullable=False)
   isdev = Column(Boolean,default=False)
   role = Column(Integer,default=RoleEnum.user.value)
   

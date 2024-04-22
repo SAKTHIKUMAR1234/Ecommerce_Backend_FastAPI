@@ -30,6 +30,7 @@ def usersignup(signup : Signup):
     user.first_name = signup.first_name
     user.last_name  = signup.last_name
     user.password = gethashpwd(signup.password)
+    user.phone_number = signup.phone_number
     user_cart = CartModel()
     session.add(user)
     session.commit()
