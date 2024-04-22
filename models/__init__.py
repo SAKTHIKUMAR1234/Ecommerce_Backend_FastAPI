@@ -2,7 +2,7 @@ from models.ActivityModel import ActivityModel
 
 from models.BaseModel import BaseModel
 
-from models.UsersModel import UsersModel
+from models.UsersModel import UsersModel, RoleEnum
 
 from models.ProductsModel import ProductsModel
 

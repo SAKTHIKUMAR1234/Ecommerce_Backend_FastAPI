@@ -37,7 +37,7 @@ def user_details():
     session = SessionLocal()
     session.begin()
     user = session.query(UsersModel).filter(UsersModel.email == get_current_user()['email']).first()
-    vendor = session.query(VendorModel).filter(VendorModel.user == user,VendorModel.status == VendorStatus.accepted).first()
+    vendor = session.query(VendorModel).filter(VendorModel.user == user,VendorModel.status == VendorStatus.accepted.value).first()
     is_vendor = False
     vendor_details = {}
     if vendor is not None:
@@ -63,6 +63,7 @@ def user_details():
     )
     
   except Exception as e:
+    traceback.print_exception(e)
     session.rollback()
     session.close()
     raise exceptions.CustomeException("OOP'S SOMETHNIG WENT WRONG")
